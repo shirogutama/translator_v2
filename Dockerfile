@@ -1,4 +1,4 @@
-FROM python:3.10-bullseye
+FROM --platform=linux/arm64 python:3.10-slim-bullseye
 
 LABEL name="translator"
 LABEL version="1.0"
@@ -12,4 +12,4 @@ RUN pip install --no-cache-dir --upgrade -r /translator/requirements.txt && \
 
 COPY ./app /translator/app
 
-CMD ["sh", "-c", "fastapi run app/main.py --port $PORT"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "3097"]

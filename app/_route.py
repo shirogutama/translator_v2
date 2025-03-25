@@ -231,10 +231,10 @@ def tokenizer(request: Request, validated_request: TokenizerRequest):
 @router.get("/get-news")
 def get_news(request: Request):
     auth = authenticated(request)
-    # if not auth:
-    #     raise HTTPException(
-    #         status_code=401, detail="Only authenticated user can access this endpoint."
-    #     )
+    if not auth:
+        raise HTTPException(
+            status_code=401, detail="Only authenticated user can access this endpoint."
+        )
     news = fetch_news()
     structured_news = []
     for article in news:
@@ -252,10 +252,10 @@ def get_news(request: Request):
 @router.get("/deepl-usage")
 def get_news(request: Request):
     auth = authenticated(request)
-    # if not auth:
-    #     raise HTTPException(
-    #         status_code=401, detail="Only authenticated user can access this endpoint."
-    #     )
+    if not auth:
+        raise HTTPException(
+            status_code=401, detail="Only authenticated user can access this endpoint."
+        )
     return {"auth": auth, "usage": get_deepl_usage()}
 
 
