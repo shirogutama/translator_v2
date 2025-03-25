@@ -9,10 +9,13 @@ COPY ./requirements.txt /translator/requirements.txt
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+        build-essential \
         gcc \
+        g++ \
         python3-dev \
         && rm -rf /var/lib/apt/lists/* \
     && pip install --no-cache-dir -U pip \
+    && pip install --no-cache-dir wheel \
     && pip install --no-cache-dir -r /translator/requirements.txt \
     && python -m unidic download
 
