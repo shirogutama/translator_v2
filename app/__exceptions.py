@@ -1,0 +1,16 @@
+ExceptionList =[
+    {"from":"転生","to":"tensei"},
+    {"from":"・","to":" "},
+    {"from":"馬事","to":"umagoto"},
+{"from":"〈","to":"("},
+{"from":"〉","to":")"},
+{"from":"だって","to":"datte"},
+{"from":"〜","to":"~"},
+{"from":"ラノベ","to":"light novel"},
+{"from":"んですか","to":"ndesuka"},
+{"from":"でも","to":"demo"},
+{"from":"美少女","to":"bishoujo"},
+{"from":"んだが","to":"ndaga"},
+{"from":"こんばんは","to":"konbanwa"},
+{"from":"こんにちは,","to":"konnichiwa"},
+]

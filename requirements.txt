@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pydantic
+cutlet
+slowapi
+unidic
+python-dotenv
+fastapi[standard]
+worldnewsapi
+deepl
