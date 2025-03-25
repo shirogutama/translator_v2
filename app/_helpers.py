@@ -116,11 +116,30 @@ def fetch_news():
 import deepl
 
 
+def get_deepl_client(quota_needed=20):
+    auth_keys = os.environ["DEEPL_KEY"]
+    if not auth_keys:
+        return None
+
+    auth_keys = auth_keys.split(",")
+
+    for auth_key in auth_keys:
+        translator = deepl.Translator(auth_key)
+        try:
+            usage = translator.get_usage()
+            if usage.character.limit - usage.character.count > quota_needed:
+                return translator
+        except:
+            continue
+    return None
+
+
 def translate_text(text, target_lang="EN-US"):
     try:
         target_lang = target_lang.upper()
-        auth_key = os.environ["DEEPL_KEY"]
-        translator = deepl.Translator(auth_key)
+        translator = get_deepl_client(len(text))
+        if not translator:
+            return None
         res = translator.translate_text(text, target_lang=target_lang)
         return res.text
     except:
@@ -129,12 +148,28 @@ def translate_text(text, target_lang="EN-US"):
 
 def get_deepl_usage():
     try:
-        auth_key = os.environ["DEEPL_KEY"]
-        translator = deepl.Translator(auth_key)
+        translator = get_deepl_client()
         res = translator.get_usage()
         return res
     except Exception as e:
         return None
+
+
+def get_deepl_total_usage():
+    result = {"count": 0, "limit": 0}
+    auth_keys = os.environ["DEEPL_KEY"]
+    if not auth_keys:
+        return result
+    auth_keys = auth_keys.split(",")
+    for auth_key in auth_keys:
+        translator = deepl.Translator(auth_key)
+        try:
+            usage = translator.get_usage()
+            result["count"] += usage.character.count
+            result["limit"] += usage.character.limit
+        except:
+            continue
+    return result
 
 
 import cutlet

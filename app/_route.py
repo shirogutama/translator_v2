@@ -6,6 +6,7 @@ from cutlet import Cutlet
 from app.__exceptions import ExceptionList
 from app._helpers import (
     fetch_news,
+    get_deepl_total_usage,
     get_deepl_usage,
     request_allowed,
     process_html,
@@ -26,9 +27,8 @@ class SlugRequest(BaseModel):
     str: str
 
 
-class TranslateRequest(BaseModel):
-    target: str = "EN"
-    str: str
+class TransformRequest(BaseModel):
+    text: str
 
 
 class TokenizerRequest(BaseModel):
@@ -249,24 +249,41 @@ def get_news(request: Request):
 
 
 @limiter.limit(get_rate_limit)
-@router.get("/deepl-usage")
-def get_news(request: Request):
+@router.post("/transform-text")
+def transform_text(request: Request, validated_request: TransformRequest):
     auth = authenticated(request)
     if not auth:
         raise HTTPException(
             status_code=401, detail="Only authenticated user can access this endpoint."
         )
-    return {"auth": auth, "usage": get_deepl_usage()}
+    content = [
+        transform_line(line)
+        for line in validated_request.text.split("\n")
+        if line != ""
+    ]
+
+    return {"auth": auth, "result": content}
+
+
+@limiter.limit(get_rate_limit)
+@router.get("/deepl-usage")
+def deepl_usage(request: Request):
+    auth = authenticated(request)
+    if not auth:
+        raise HTTPException(
+            status_code=401, detail="Only authenticated user can access this endpoint."
+        )
+    return {"auth": auth, "usage": get_deepl_total_usage()}
 
 
 @limiter.limit(get_rate_limit)
 @router.get("/deepl-translate")
-def get_news(request: Request, target: str = "EN", str: str = ""):
+def deepl_translate(request: Request, target: str = "EN", str: str = ""):
     auth = authenticated(request)
-    # if not auth:
-    #     raise HTTPException(
-    #         status_code=401, detail="Only authenticated user can access this endpoint."
-    #     )
+    if not auth:
+        raise HTTPException(
+            status_code=401, detail="Only authenticated user can access this endpoint."
+        )
     return {
         "auth": auth,
         "result": translate_text(str, target),
