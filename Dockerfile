@@ -22,5 +22,7 @@ RUN apt-get update && \
 COPY ./app /translator/app
 
 ENV PORT=3097
+WORKDIR /translator
 ENV PYTHONPATH=/translator
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "3097"]
+ENV PORT=3097
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]
