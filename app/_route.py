@@ -3,8 +3,8 @@ from fastapi import APIRouter, Request, HTTPException
 
 from cutlet import Cutlet
 
-from __exceptions import ExceptionList
-from _helpers import (
+from app.__exceptions import ExceptionList
+from app._helpers import (
     fetch_news,
     get_deepl_usage,
     request_allowed,
@@ -12,8 +12,8 @@ from _helpers import (
     transform_line,
     translate_text,
 )
-from rate_limiter import authenticated, limiter, get_rate_limit
-from _info import __version__
+from app.rate_limiter import authenticated, limiter, get_rate_limit
+from app._info import __version__
 from pydantic import BaseModel, Field
 
 
