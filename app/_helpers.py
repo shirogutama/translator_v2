@@ -1,7 +1,7 @@
 import os
 from fastapi import FastAPI, HTTPException, Request
 from html.parser import HTMLParser
-from rate_limiter import authenticated
+from app.rate_limiter import authenticated
 
 app = FastAPI()
 
