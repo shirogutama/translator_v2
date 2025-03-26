@@ -262,7 +262,13 @@ def get_news(request: Request, target: str = "en"):
         elif len(transformed_line == 1):
             transformed_line[0]["translation"] = str(translated_content[0])
 
-        result = {"title": transform_line(title), "content": transformed_line}
+        result = {
+            "title": transform_line(title),
+            "content": transformed_line,
+            "category": article.category,
+            "source": article.url,
+            "published_date": article.publish_date,
+        }
         structured_news.append(result)
     return {"auth": auth, "news": structured_news}
 
