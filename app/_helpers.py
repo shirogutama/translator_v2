@@ -378,8 +378,8 @@ def translate_array(
             current_group.append(text)
             current_size += text_size
         #
-        if current_group:
-            text_groups.append(current_group)
+    if current_group:
+        text_groups.append(current_group)
 
     all_translations = []
 
