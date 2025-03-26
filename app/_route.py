@@ -31,6 +31,11 @@ class TransformRequest(BaseModel):
     target: str = "en"
 
 
+class TransformNewsRequest(BaseModel):
+    title: str
+    content: str
+
+
 class TranslateTextRequest(BaseModel):
     text: str
     target_lang: str = "en"
@@ -248,23 +253,12 @@ def get_news(request: Request, target: str = "en"):
             status_code=401, detail="Only authenticated user can access this endpoint."
         )
     news = fetch_news()
+
     structured_news = []
     for article in news:
-        title = article.title
-        splitted_content = [line for line in article.text.split("\n") if line != ""]
-        translated_content = translate_array(splitted_content, target)
-
-        transformed_line = [transform_line(line) for line in splitted_content]
-
-        if len(transformed_line) == len(translated_content):
-            for i in range(len(transformed_line)):
-                transformed_line[i]["translation"] = str(translated_content[i])
-        elif len(transformed_line == 1):
-            transformed_line[0]["translation"] = str(translated_content[0])
-
         result = {
-            "title": transform_line(title),
-            "content": transformed_line,
+            "title": article.title,
+            "content": article.text,
             "category": article.category,
             "source": article.url,
             "published_date": article.publish_date,
