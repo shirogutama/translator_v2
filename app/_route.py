@@ -284,7 +284,7 @@ def transform_text(request: Request, validated_request: TransformRequest):
     if len(transformed_line) == len(translated_content):
         for i in range(len(transformed_line)):
             transformed_line[i]["translation"] = str(translated_content[i])
-    elif len(transformed_line == 1):
+    elif len(transformed_line) == 1:
         transformed_line[0]["translation"] = str(translated_content[0])
 
     return {"auth": auth, "result": transformed_line}
