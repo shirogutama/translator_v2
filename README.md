@@ -1,6 +1,6 @@
 # Japanese Text Translation API
 
-A FastAPI-based service for Japanese text translation and processing, featuring romaji conversion, furigana generation, text slugification, and integration with DeepL translation services.
+A FastAPI-based service for Japanese text translation and processing, featuring romaji conversion, furigana generation, text slugification, and integration with OpenRouter AI translation services.
 
 ## Features
 
@@ -9,7 +9,7 @@ A FastAPI-based service for Japanese text translation and processing, featuring 
 - 🔗 Text slugification for URL-friendly strings
 - 🔍 Japanese text tokenization
 - 📰 News fetching with translation
-- 🌐 DeepL translation integration
+- 🌐 AI-powered translation via OpenRouter
 - ⚡ Rate limiting and authentication
 
 ## Requirements
@@ -44,7 +44,7 @@ Build and run using Docker:
 
 ```bash
 docker build -t translator .
-docker run -p 8000:3097 -e AUTHENTICATION_KEY=your-key -e NEWSAPI_KEY=your-key -e DEEPL_KEY=your-key translator
+docker run -p 8000:3097 -e AUTHENTICATION_KEY=your-key -e NEWSAPI_KEY=your-key -e OPENROUTER_API_KEY=your-key translator
 ```
 
 ## Configuration
@@ -55,7 +55,7 @@ Create a `.env` file based on `.env.example`:
 AUTHENTICATION_KEY=your-authentication-key-here
 PORT=8000
 NEWSAPI_KEY=your-newsapi-key-here
-DEEPL_KEY=your-deepl-key-here-separate-with-comma-if-you-have-multiple-keys
+OPENROUTER_API_KEY=your-openrouter-api-key-here
 ```
 
 ## API Endpoints
@@ -138,18 +138,32 @@ Content-Type: application/json
 }
 ```
 
-#### 3. DeepL Translation
+#### 3. Translation
 
 ```http
-GET /deepl-translate?target=EN&str=こんにちは
+POST /translate
 Authentication: your-auth-key
+Content-Type: application/json
+
+{
+    "text": "こんにちは",
+    "target_lang": "EN",
+    "source_lang": "JA"  # Optional
+}
 ```
 
-#### 4. DeepL Usage Stats
+#### 4. Batch Translation
 
 ```http
-GET /deepl-usage
+POST /translate-batch
 Authentication: your-auth-key
+Content-Type: application/json
+
+{
+    "texts": ["こんにちは", "さようなら"],
+    "target_lang": "EN",
+    "source_lang": "JA"  # Optional
+}
 ```
 
 ## Rate Limiting

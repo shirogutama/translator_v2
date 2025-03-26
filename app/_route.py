@@ -11,6 +11,7 @@ from app._helpers import (
     request_allowed,
     process_html,
     transform_line,
+    translate_array,
     translate_text,
 )
 from app.rate_limiter import authenticated, limiter, get_rate_limit
@@ -29,6 +30,7 @@ class SlugRequest(BaseModel):
 
 class TransformRequest(BaseModel):
     text: str
+    target: str = "en"
 
 
 class TokenizerRequest(BaseModel):
@@ -229,7 +231,7 @@ def tokenizer(request: Request, validated_request: TokenizerRequest):
 
 @limiter.limit(get_rate_limit)
 @router.get("/get-news")
-def get_news(request: Request):
+def get_news(request: Request, target: str = "en"):
     auth = authenticated(request)
     if not auth:
         raise HTTPException(
@@ -239,11 +241,18 @@ def get_news(request: Request):
     structured_news = []
     for article in news:
         title = article.title
-        content = [
-            transform_line(line) for line in article.text.split("\n") if line != ""
-        ]
+        splitted_content = [line for line in article.text.split("\n") if line != ""]
+        translated_content = translate_array(splitted_content, target)
 
-        result = {"title": transform_line(title), "content": content}
+        transformed_line = [transform_line(line) for line in splitted_content]
+
+        if len(transformed_line) == len(translated_content):
+            for i in range(len(transformed_line)):
+                transformed_line[i]["translation"] = str(translated_content[i])
+        elif len(transformed_line == 1):
+            transformed_line[0]["translation"] = str(translated_content[0])
+
+        result = {"title": transform_line(title), "content": transformed_line}
         structured_news.append(result)
     return {"auth": auth, "news": structured_news}
 
@@ -256,36 +265,30 @@ def transform_text(request: Request, validated_request: TransformRequest):
         raise HTTPException(
             status_code=401, detail="Only authenticated user can access this endpoint."
         )
-    content = [
-        transform_line(line)
-        for line in validated_request.text.split("\n")
-        if line != ""
+
+    splitted_content = [
+        line for line in validated_request.text.split("\n") if line != ""
     ]
+    translated_content = translate_array(splitted_content, validated_request.target)
+    transformed_line = [transform_line(line) for line in splitted_content]
+    if len(transformed_line) == len(translated_content):
+        for i in range(len(transformed_line)):
+            transformed_line[i]["translation"] = str(translated_content[i])
+    elif len(transformed_line == 1):
+        transformed_line[0]["translation"] = str(translated_content[0])
 
-    return {"auth": auth, "result": content}
-
-
-@limiter.limit(get_rate_limit)
-@router.get("/deepl-usage")
-def deepl_usage(request: Request):
-    auth = authenticated(request)
-    if not auth:
-        raise HTTPException(
-            status_code=401, detail="Only authenticated user can access this endpoint."
-        )
-    return {"auth": auth, "usage": get_deepl_total_usage()}
+    return {"auth": auth, "result": transformed_line}
 
 
 @limiter.limit(get_rate_limit)
-@router.get("/deepl-translate")
-def deepl_translate(request: Request, target: str = "EN", str: str = ""):
+@router.get("/text-translate")
+def text_translate(request: Request, target: str = "en", text: str = ""):
     auth = authenticated(request)
-    if not auth:
-        raise HTTPException(
-            status_code=401, detail="Only authenticated user can access this endpoint."
-        )
+    # if not auth:
+    #     raise HTTPException(
+    #         status_code=401, detail="Only authenticated user can access this endpoint."
+    #     )
     return {
         "auth": auth,
-        "result": translate_text(str, target),
-        "usage": get_deepl_usage(),
+        "result": translate_text(text, target),
     }
