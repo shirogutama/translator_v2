@@ -31,6 +31,18 @@ class TransformRequest(BaseModel):
     target: str = "en"
 
 
+class TranslateTextRequest(BaseModel):
+    text: str
+    target_lang: str = "en"
+    source_lang: str | None = None
+
+
+class TranslateBatchRequest(BaseModel):
+    texts: list[str]
+    target_lang: str = "en"
+    source_lang: str | None = None
+
+
 class TokenizerRequest(BaseModel):
     str: str
     with_particle: bool = True
@@ -280,28 +292,38 @@ def transform_text(request: Request, validated_request: TransformRequest):
 
 @limiter.limit(get_rate_limit)
 @router.post("/translate-text")
-def translate(
-    request: Request, text: str, target_lang: str = "en", source_lang: str | None = None
-):
+def translate(request: Request, validated_request: TranslateTextRequest):
     auth = authenticated(request)
     if not auth:
         raise HTTPException(
             status_code=401, detail="Only authenticated users can access this endpoint."
         )
-    return {"auth": auth, "result": translate_text(text, target_lang, source_lang)}
+    return {
+        "auth": auth,
+        "result": translate_text(
+            validated_request.text,
+            validated_request.target_lang,
+            validated_request.source_lang,
+        ),
+    }
 
 
 @limiter.limit(get_rate_limit)
 @router.post("/translate-batch")
 def translate_batch(
     request: Request,
-    texts: list[str],
-    target_lang: str = "en",
-    source_lang: str | None = None,
+    validated_request: TranslateBatchRequest,
 ):
     auth = authenticated(request)
     if not auth:
         raise HTTPException(
             status_code=401, detail="Only authenticated users can access this endpoint."
         )
-    return {"auth": auth, "results": translate_array(texts, target_lang, source_lang)}
+    return {
+        "auth": auth,
+        "results": translate_array(
+            validated_request.texts,
+            validated_request.target_lang,
+            validated_request.source_lang,
+        ),
+    }
