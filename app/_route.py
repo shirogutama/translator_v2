@@ -6,8 +6,6 @@ from cutlet import Cutlet
 from app.__exceptions import ExceptionList
 from app._helpers import (
     fetch_news,
-    get_deepl_total_usage,
-    get_deepl_usage,
     request_allowed,
     process_html,
     transform_line,
@@ -281,14 +279,29 @@ def transform_text(request: Request, validated_request: TransformRequest):
 
 
 @limiter.limit(get_rate_limit)
-@router.get("/text-translate")
-def text_translate(request: Request, target: str = "en", text: str = ""):
+@router.post("/translate-text")
+def translate(
+    request: Request, text: str, target_lang: str = "en", source_lang: str | None = None
+):
     auth = authenticated(request)
-    # if not auth:
-    #     raise HTTPException(
-    #         status_code=401, detail="Only authenticated user can access this endpoint."
-    #     )
-    return {
-        "auth": auth,
-        "result": translate_text(text, target),
-    }
+    if not auth:
+        raise HTTPException(
+            status_code=401, detail="Only authenticated users can access this endpoint."
+        )
+    return {"auth": auth, "result": translate_text(text, target_lang, source_lang)}
+
+
+@limiter.limit(get_rate_limit)
+@router.post("/translate-batch")
+def translate_batch(
+    request: Request,
+    texts: list[str],
+    target_lang: str = "en",
+    source_lang: str | None = None,
+):
+    auth = authenticated(request)
+    if not auth:
+        raise HTTPException(
+            status_code=401, detail="Only authenticated users can access this endpoint."
+        )
+    return {"auth": auth, "results": translate_array(texts, target_lang, source_lang)}
