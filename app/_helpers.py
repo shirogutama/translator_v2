@@ -83,7 +83,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def fetch_news(categories: list[str], number=20):
+def fetch_news(categories: list[str], num=20):
     configuration = worldnewsapi.Configuration()
     configuration.api_key["apiKey"] = os.environ["NEWSAPI_KEY"]
     # Configure API key authorization: headerApiKey
@@ -101,11 +101,15 @@ def fetch_news(categories: list[str], number=20):
             source_country=source_country,
             language=language,
             categories=categories,
-            number=number,
+            number=num,
         )
         return api_response.news
     except Exception as e:
-        raise "Exception when calling NewsApi->retrieve_newspaper_front_page: %s\n" % e
+        raise e
+    # Exception(
+
+    #         # f"Exception when calling NewsApi->retrieve_newspaper_front_page: {e}"
+    #     )
 
 
 # ================================== #

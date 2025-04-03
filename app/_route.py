@@ -247,7 +247,7 @@ def tokenizer(request: Request, validated_request: TokenizerRequest):
 @limiter.limit(get_rate_limit)
 @router.get("/get-news")
 def get_news(
-    request: Request, target: str = "en", category: str = "science", number=10
+    request: Request, target: str = "en", category: str = "science", number: int = 10
 ):
     auth = authenticated(request)
     if not auth:
