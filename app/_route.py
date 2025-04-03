@@ -246,13 +246,29 @@ def tokenizer(request: Request, validated_request: TokenizerRequest):
 
 @limiter.limit(get_rate_limit)
 @router.get("/get-news")
-def get_news(request: Request, target: str = "en"):
+def get_news(
+    request: Request, target: str = "en", category: str = "science", number=10
+):
     auth = authenticated(request)
     if not auth:
         raise HTTPException(
             status_code=401, detail="Only authenticated user can access this endpoint."
         )
-    news = fetch_news()
+
+    available_categories = [
+        "business",
+        "technology",
+        "entertainment",
+        "science",
+        "education",
+    ]
+    submitted_category = [
+        x for x in category.lower().split(",") if x in available_categories
+    ]
+    if len(submitted_category) < 1:
+        submitted_category.append("science")
+
+    news = fetch_news(submitted_category, number)
 
     structured_news = []
     for article in news:

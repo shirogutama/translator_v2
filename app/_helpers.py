@@ -83,7 +83,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def fetch_news():
+def fetch_news(categories: list[str], number=20):
     configuration = worldnewsapi.Configuration()
     configuration.api_key["apiKey"] = os.environ["NEWSAPI_KEY"]
     # Configure API key authorization: headerApiKey
@@ -94,19 +94,14 @@ def fetch_news():
         api_instance = worldnewsapi.NewsApi(api_client)
         source_country = "jp"
         language = "ja"
-        categories = ",".join(
-            [
-                "business",
-                "technology",
-                "entertainment",
-                "science",
-                "education",
-            ]
-        )
+        categories = ",".join(categories)
     try:
         # Retrieve Newspaper Front Page
         api_response = api_instance.search_news(
-            source_country=source_country, language=language, categories=categories
+            source_country=source_country,
+            language=language,
+            categories=categories,
+            number=number,
         )
         return api_response.news
     except Exception as e:
@@ -491,9 +486,14 @@ def transform_line(line: str):
 
     result = {"origin": line, "translation": None, "words": []}
 
-    for word in words:
+    for word_id, word in enumerate(words):
+        last_output_word = result["words"][-1] if result["words"] else None
+        prev_word = words[word_id - 1] if word_id > 0 else None
+        next_word = words[word_id + 1] if word_id < len(words) - 1 else None
+
         # Only provide furigana for words containing kanji
         has_kanji = any(is_kanji(char) for char in word.surface)
+        furigana = jaconv.kata2hira(word.feature.kana) if word.feature.kana else None
 
         # Handle special cases that should have no furigana
         if (
@@ -504,12 +504,82 @@ def transform_line(line: str):
             or word.surface.isascii()
         ):  # ASCII text
             furigana = None
-        else:
-            # Get furigana for kanji words
-            furigana = (
-                jaconv.kata2hira(word.feature.kana) if word.feature.kana else None
-            )
 
-        result["words"].append({"text": word.surface, "furigana": furigana})
+        word_entity = {"text": word.surface, "furigana": furigana, "space": False}
+        # handle possessive apostrophe as a special case
+        if (
+            word.surface == "'"
+            and (
+                next_word
+                and next_word.char_type == cutlet.CHAR_ALPHA
+                and not next_word.white_space
+            )
+            and not word.white_space
+        ):
+            # remove preceeding space
+            if last_output_word:
+                last_output_word["space"] = False
+
+            result["words"].append(word_entity)
+            continue
+
+        if word.surface in "「『":
+            if last_output_word:
+                last_output_word["space"] = True
+            result["words"].append(word_entity)
+            continue
+        if word.surface in "([":
+            if last_output_word:
+                last_output_word["space"] = True
+            result["words"].append(word_entity)
+            continue
+
+        if word.surface == "/":
+            result["words"].append(word_entity)
+            continue
+
+        # preserve spaces between ascii tokens
+        if word.surface.isascii() and next_word and next_word.surface.isascii():
+            use_space = bool(next_word.white_space)
+            result["words"].append(
+                {"text": word.surface, "furigana": furigana, "space": use_space}
+            )
+            continue
+
+        # no space sometimes
+        # お酒 -> osake
+        if word.feature.pos1 == "接頭辞":
+            result["words"].append(word_entity)
+            continue
+        # 今日、 -> kyou, ; 図書館 -> toshokan
+        if next_word and next_word.feature.pos1 in ("補助記号", "接尾辞"):
+            result["words"].append(word_entity)
+            continue
+        # special case for half-width commas
+        if next_word and next_word.surface == ",":
+            result["words"].append(word_entity)
+            continue
+
+        # 思えば -> omoeba
+        if next_word and next_word.feature.pos2 in ("接続助詞"):
+            result["words"].append(word_entity)
+            continue
+        # 333 -> 333 ; this should probably be handled in mecab
+        if word.surface.isdigit() and next_word and next_word.surface.isdigit():
+            result["words"].append(word_entity)
+            continue
+        # そうでした -> sou deshita
+        if (
+            next_word
+            and word.feature.pos1 in ("動詞", "助動詞", "形容詞")
+            and next_word.feature.pos1 == "助動詞"
+            and next_word.surface != "です"
+        ):
+            result["words"].append(word_entity)
+            continue
+        # if we get here, it does need a space
+        result["words"].append(
+            {"text": word.surface, "furigana": furigana, "space": True}
+        )
 
     return result
